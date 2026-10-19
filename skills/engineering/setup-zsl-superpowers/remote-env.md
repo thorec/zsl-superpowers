@@ -31,6 +31,7 @@ The `.env` box on the environment is **not a secret vault** (the UI warns its va
 
 - **`GH_TOKEN`** — GitHub PAT. Scopes: **read** on `zsl-superpowers` (the `SessionStart` hook clones it) **+ read/write on the repos workers ship to** (`contents` + `pull requests` fine-grained, or classic `repo`). This authenticates the worker's feature-branch push, PR open, and `afk-runs` ledger push.
 - **`ZSL_SUPERPOWERS_REF`** — ref the skills-provisioning hook checks out (default `main`).
+- **`ZSL_SUPERPOWERS_REPO`** — repo the hook clones skills from (default upstream `ZunoSmartLabs/zsl-superpowers`). Set it to provision from a fork or copy. The self-hosted dispatcher sets it automatically to its own checkout's origin.
 - **`AFK_TELEGRAM_BOT_TOKEN`** / **`AFK_TELEGRAM_CHAT_ID`** — only if Telegram heads-up is enabled (see Notifications).
 - **`<cloud-cred names, if any>`** — if this repo's tests/slices need cloud credentials at run time (e.g. AWS for infra work), the environment must carry **static keys or a CI role** — interactive SSO won't work in a headless routine session, and workers will stall on integration tests without them. Record the var names here. Pure-code repos need none.
 

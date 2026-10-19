@@ -66,7 +66,7 @@ git -C "$T/seed" commit --quiet -am "worker \$num" && git -C "$T/seed" push --qu
 exit 0
 EOF
   chmod +x "$T/claude-stub"
-  : >"$T/hook"
+  printf '#!/usr/bin/env bash\necho "${ZSL_SUPERPOWERS_REPO:-}" >"%s/hook-repo"\n' "$T" >"$T/hook"
   cat >"$T/env" <<EOF
 AFK_REPOS=file://$T/origin.git
 AFK_WORK_DIR=$T/work
@@ -135,7 +135,20 @@ clone="$T/work/$(ls "$T/work")"
 [ -f "$clone/.afk-keep" ] && ok "stuck: clone marked .afk-keep" || bad "stuck: clone marked .afk-keep"
 rm -rf "$T"
 
-# --- 8. Config boundary: no AFK_REPOS → exit 1 with a pointer to the env file.
+# --- 8. Skills come from the copy the dispatcher runs from, unless overridden — a
+#        runner set up from a fork must not silently run upstream's skills.
+setup "done"
+tick 2026-05-31T20:10:00Z >/dev/null
+assert_eq "skills repo: defaults to the dispatcher's own origin" \
+  "$(git -C "$SCRIPT_DIR" remote get-url origin)" "$(cat "$T/hook-repo")"
+rm -rf "$T"
+setup "done"
+echo "ZSL_SUPERPOWERS_REPO=https://example.com/other/zsl" >>"$T/env"
+tick 2026-05-31T20:10:00Z >/dev/null
+assert_eq "skills repo: env file override wins" "https://example.com/other/zsl" "$(cat "$T/hook-repo")"
+rm -rf "$T"
+
+# --- 9. Config boundary: no AFK_REPOS → exit 1 with a pointer to the env file.
 out="$(AFK_ENV_FILE=/nonexistent AFK_REPOS="" bash "$DISPATCH" 2>&1)"
 code=$?
 assert_eq "no repos: exit 1" 1 "$code"

@@ -25,6 +25,8 @@
 #   AFK_KEEP_DAYS      prune clones older than this (default 7)
 #   AFK_TIMEOUT_HOURS  kill a worker after this long, if `timeout` exists (default 6)
 #   AFK_MAX            passed through to /afk-worker → /tdd-parallel --max
+#   ZSL_SUPERPOWERS_REPO / _REF  where the skills hook fetches skills from
+#                      (default: the repo this dispatcher's own checkout came from)
 #   ANTHROPIC_* / GH_TOKEN / AFK_TELEGRAM_*  passed through to the worker
 # Test seams: AFK_NOW, AFK_CLAUDE, AFK_SKILLS_HOOK.
 set -uo pipefail
@@ -130,6 +132,13 @@ rm -rf "$clone"
 if ! git clone --quiet "$url" "$clone" >>"$run_log" 2>&1; then
   notify "afk-dispatch: PRD $num — clone of $key failed (see $(hostname):$run_log)"
   die "clone failed — see $run_log"
+fi
+
+# Provision skills from the same zsl-superpowers this dispatcher runs from, so a
+# runner set up from a fork/copy runs that copy's skills, not upstream's.
+if [ -z "${ZSL_SUPERPOWERS_REPO:-}" ]; then
+  ZSL_SUPERPOWERS_REPO="$(git -C "$SCRIPT_DIR" remote get-url origin 2>/dev/null || true)"
+  [ -n "$ZSL_SUPERPOWERS_REPO" ] && export ZSL_SUPERPOWERS_REPO
 fi
 
 if [ -f "$SKILLS_HOOK" ]; then
