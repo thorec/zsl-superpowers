@@ -24,7 +24,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 SLASH_COMMAND_OUTPUT_MARKERS = (
@@ -222,7 +222,7 @@ def collect(args: argparse.Namespace) -> dict:
         print(f"projects dir not found: {args.projects_dir}", file=sys.stderr)
         sys.exit(1)
 
-    window_end = datetime.now(timezone.utc)
+    window_end = datetime.now(UTC)
     window_start = window_end - timedelta(hours=args.hours)
     mtime_floor = (window_start - timedelta(hours=2)).timestamp()
 

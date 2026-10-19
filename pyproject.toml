@@ -1,7 +1,26 @@
+# Dev environment only — this repo ships skills, not a Python package. `make venv`
+# (uv sync) builds .venv from this file + uv.lock; lint, test and docs all run from it.
+[project]
+name = "zsl-superpowers-dev"
+version = "0"
+# Skill scripts run on the user's `python3`; 3.12 is the floor (Ubuntu 24.04's
+# default, so self-hosted runners have it out of the box).
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["ruff", "basedpyright", "pytest"]
+docs = ["mkdocs-material[imaging]"]
+
+[tool.uv]
+package = false
+default-groups = ["dev", "docs"]
+
 [tool.ruff]
 line-length = 104
 
 [tool.basedpyright]
+pythonVersion = "3.12"
 typeCheckingMode = "standard"
 
 [tool.ruff.lint]

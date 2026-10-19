@@ -11,6 +11,8 @@ Skills live in bucket folders under `skills/`:
 
 ## Validating changes
 
+Everything below runs from one dev venv, `.venv`, built by **uv** (`brew install uv`) from `pyproject.toml` + `uv.lock` on the Python pinned in `.python-version`. The targets build it on first use; `make venv` builds it explicitly. Add dev tools with `uv add --group dev <pkg>` (docs: `--group docs`) so the lockfile stays the source of truth. Skill scripts themselves run on the user's `python3` and target **3.12+** (`requires-python`).
+
 - `make lint` — `ruff check` plus `basedpyright` over the Python (mkdocs hooks, scripts). When you add a Python deterministic-gate script under `skills/**/scripts/`, add it to the `basedpyright` line.
 - `make test` — runs the deterministic-gate script tests: `pytest` over `skills/**` (the Python scripts' `scripts/tests/test_*.py`) plus each shell script's own assertion runner. Add a line per new shell test runner.
 - `make docs` — strict MkDocs build. **This is the exact gate the GitHub Pages deploy runs on push to `main`** — run it locally before pushing any change to `docs/**`, `skills/**/SKILL.md`, `scripts/mkdocs_hooks/**`, or `mkdocs.yml`, or the deploy fails. (`make docs-serve` for live preview.)

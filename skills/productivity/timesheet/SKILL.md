@@ -18,7 +18,7 @@ DIGEST=$({ ls "$PWD"/skills/*/timesheet/scripts/digest_sessions.py 2>/dev/null
 [ -n "$DIGEST" ] && echo "resolved: $DIGEST" || echo "zsl-gate: digest_sessions.py unresolved — see Fallback"
 ```
 
-Use `python3 "$DIGEST" …` for every invocation below.
+Use `python3 "$DIGEST" …` for every invocation below (needs Python 3.12+; if `python3 --version` is older, use a newer interpreter such as `python3.12` explicitly).
 
 **Fallback (if `$DIGEST` is empty):** the gate didn't resolve — find the script under your install (it lives at `skills/productivity/timesheet/scripts/digest_sessions.py` in the repo) and invoke it by absolute path. If you cannot run it at all, compute the two renders by hand with these exact rules:
 
