@@ -4,6 +4,19 @@ For the full commit history, see
 [github.com/ZunoSmartLabs/zsl-superpowers/commits/main](https://github.com/ZunoSmartLabs/zsl-superpowers/commits/main).
 This page summarises the user-facing changes per plugin version.
 
+## 2.2.1
+
+The overnight loop can now take its skills from a fork or copy of
+zsl-superpowers.
+
+- **`remote-skills-hook.sh`** now honours a new `ZSL_SUPERPOWERS_REPO` variable
+  (default: upstream `ZunoSmartLabs/zsl-superpowers`). If a skills cache was
+  cloned from a different repo, the hook replaces it instead of quietly
+  reusing it.
+- **`afk-dispatch.sh`** sets `ZSL_SUPERPOWERS_REPO` to the repo its own checkout
+  was cloned from, so a self-hosted runner built from your fork runs your
+  fork's skills. An env-file value takes precedence.
+
 ## 2.2.0
 
 Add a **self-hosted runner** for the overnight loop, so the workers can run on
