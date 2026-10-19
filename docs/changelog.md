@@ -4,6 +4,24 @@ For the full commit history, see
 [github.com/ZunoSmartLabs/zsl-superpowers/commits/main](https://github.com/ZunoSmartLabs/zsl-superpowers/commits/main).
 This page summarises the user-facing changes per plugin version.
 
+## 2.2.2
+
+The bundled Python scripts now target **Python 3.12+**, and development
+tooling moves to one uv-managed venv.
+
+- `/timesheet`'s `digest_sessions.py` uses `datetime.UTC`, which needs Python
+  3.11 or newer; 3.12 is the floor the repo now declares.
+- For contributors: `make lint`, `make test` and `make docs` all run from a
+  single `.venv` that `uv sync` builds from `pyproject.toml` and `uv.lock`, on
+  the Python pinned in `.python-version`. Install uv with `brew install uv`.
+
+### Upgrading from 2.2.1
+
+- If `python3 --version` reports something older than 3.12 (macOS's built-in
+  `/usr/bin/python3` is 3.9), install a newer Python, for example
+  `brew install python`, and make sure it comes first on your `PATH`.
+  Otherwise `/timesheet` fails with an `ImportError`.
+
 ## 2.2.1
 
 The overnight loop can now take its skills from a fork or copy of

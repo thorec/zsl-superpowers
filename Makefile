@@ -1,17 +1,25 @@
-.PHONY: lint format test sync-books check-upstream-books docs docs-serve
+.PHONY: venv lint format test sync-books check-upstream-books docs docs-serve
 
-lint:
-	uvx ruff check .
-	uvx basedpyright skills/productivity/timesheet/scripts/digest_sessions.py \
+# One dev venv for lint, test and docs, built by uv from pyproject.toml + uv.lock
+# (Python version from .python-version). Rebuilt whenever any of them changes.
+.venv: pyproject.toml uv.lock .python-version
+	uv sync
+	@touch .venv
+
+venv: .venv
+
+lint: .venv
+	.venv/bin/ruff check .
+	.venv/bin/basedpyright skills/productivity/timesheet/scripts/digest_sessions.py \
 		skills/productivity/writing-great-skills/scripts/check-description-length.py
 
-format:
-	uvx ruff format .
+format: .venv
+	.venv/bin/ruff format .
 
 # Tests for the deterministic-gate scripts bundled under skills/**/scripts/.
 # Python scripts via pytest; shell scripts via their own assertion runners.
-test:
-	uvx --with pytest pytest skills -q
+test: .venv
+	.venv/bin/pytest skills -q
 	bash skills/engineering/setup-zsl-superpowers/scripts/tests/test_set_status_options.sh
 	bash skills/engineering/setup-zsl-superpowers/scripts/tests/test_remote_skills_hook.sh
 	bash skills/engineering/tdd-parallel/scripts/tests/test_preflight.sh
@@ -21,13 +29,9 @@ test:
 	bash skills/remote-agents/afk-worker/scripts/tests/test_afk_dispatch.sh
 
 # Docs run on mkdocs-material with the `social` plugin, which needs cairo at
-# build time (CI installs it via apt; macOS via `brew install cairo`). uvx
-# can't see Homebrew's cairo — macOS strips DYLD_* when uv's hardened binary
-# spawns Python — so docs use a venv (Homebrew's Python finds cairo) instead.
-.venv:
-	python3 -m venv .venv
-	.venv/bin/pip install --quiet --upgrade pip
-	.venv/bin/pip install --quiet 'mkdocs-material[imaging]'
+# build time (CI installs it via apt; macOS via `brew install cairo`). Call the
+# venv's mkdocs directly, never via `uv run`/uvx: macOS strips DYLD_* when uv's
+# hardened binary spawns Python, so Homebrew's cairo isn't found that way.
 
 # Strict build — the exact gate the GitHub Pages deploy runs on push to main.
 docs: .venv
