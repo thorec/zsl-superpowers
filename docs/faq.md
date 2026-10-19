@@ -144,6 +144,15 @@ what ran and walks you through the PRs to verify and merge. It never
 auto-merges or deploys. See the
 [Remote agents deep-dive](remote-agents.md) for the full design.
 
+### Can the overnight loop run on another model, like MiniMax?
+
+Yes, with the [self-hosted runner](self-hosted-runner.md). claude.ai
+routines always run Claude, so instead a machine you own runs a cron
+dispatcher that starts each worker as a headless Claude Code session. Claude
+Code can point at any Anthropic-compatible endpoint (MiniMax documents one).
+The skills, the `afk-runs` ledger and `/zsl:morning-review` stay the same.
+Only the scheduler and the place the worker runs change.
+
 ### What are the bundled engineering-book rules?
 
 Eight engineering skills bundle decision-pressure rules distilled from

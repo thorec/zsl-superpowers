@@ -57,6 +57,8 @@ For each PR, fetch: title + body (look for a `## ⚠️ Integration review faile
 - `.scratch/` mode: ledger entries with `outcome: halt-*` — their `slices-needs-info` + `rca`. (After reconciliation, below, these are also real `needs-info` slices in `.scratch/`.)
 - GitHub-issues mode: `gh issue list --label needs-info --search "in:body 'Halt RCA — /tdd-parallel halted'"`.
 
+**Where a run's evidence lives.** The entry's `routine:` field says which runner fired it. A claude.ai URL → open the routine session. A `<host>:<log path>` (or `trigger: self-hosted` with `routine: -`, meaning the dispatcher never reached it) → a **self-hosted** run: the full session transcript is that log file on the runner machine, and a stuck run's clone is kept under the runner's `AFK_WORK_DIR` (marked `.afk-keep`). Wherever this skill says "routine URL" or "routine session" below, read it as this for self-hosted runs.
+
 **Scheduled-but-no-result** — the cross-check: any scheduled PRD whose ledger entry is still `outcome: pending` with no PR (never fired / throttled), or `claim: in-progress` with no PR (stuck, likely 3e). Surfaced separately in §2.
 
 #### Reconcile the ledger into `.scratch/`
@@ -88,7 +90,7 @@ Print two things, **summary first**:
 1. **PRs with `## ⚠️ Integration review failed`** — `/tdd-parallel` couldn't apply its cross-slice cleanup. Run `/code-review` locally against the PR branch before merge.
 2. **PRs containing any `verify-after: staging` slice** — needs a staging deploy + smoke test before merge.
 3. **PRs containing any `verify-after: local-run` slice** — needs `gh pr checkout` + `/verify` against local dev env.
-4. **Scheduled-but-no-result PRDs** — a worker that never produced output. Diagnose: throttled (re-schedule tonight), stuck on a 3e dirty tree (inspect the routine session), or the routine never fired (check the routine URL).
+4. **Scheduled-but-no-result PRDs** — a worker that never produced output. Diagnose: throttled (re-schedule tonight), stuck on a 3e dirty tree (inspect the routine session — or the kept clone on a self-hosted runner), or the routine never fired (check the routine URL — or, self-hosted, whether the runner machine was up and its dispatcher log shows the tick).
 5. **Halted slices in `needs-info`** — re-triage decisions.
 6. **PRs with all slices `verify-after: ci`** — skim the diff, merge if reasonable.
 7. **PRs with red CI** — surfaced separately; never auto-merged.

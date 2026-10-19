@@ -1,6 +1,6 @@
 ---
 name: afk-worker
-description: Remote per-PRD executor fired by an /afk-fanout-scheduled one-shot routine. Runs unattended in its own remote claude.ai session — own clone, own working tree, own branch — so it never contends with other PRDs' workers. Flips the PRD's scheduled claim to in-progress, runs /tdd-parallel <num> --on-review-failure=continue --max 2, opens one integration PR, and on halt records the offending slice + RCA. Reports its outcome (claim state, PR URL or halt RCA) as a per-PRD entry on the shared afk-runs git branch that /morning-review reconciles back into the tracker, and fires a best-effort Telegram heads-up. Invoked by the scheduled routine, not by hand.
+description: Remote per-PRD executor fired by an /afk-fanout-scheduled one-shot routine, or by the self-hosted afk-dispatch.sh cron runner (any model, e.g. MiniMax). Runs unattended in its own remote session — own clone, own working tree, own branch — so it never contends with other PRDs' workers. Flips the PRD's scheduled claim to in-progress, runs /tdd-parallel <num> --on-review-failure=continue --max ${AFK_MAX:-2}, opens one integration PR, and on halt records the offending slice + RCA. Reports its outcome (claim state, PR URL or halt RCA) as a per-PRD entry on the shared afk-runs git branch that /morning-review reconciles back into the tracker, and fires a best-effort Telegram heads-up. Invoked by the routine or dispatcher, not by hand.
 ---
 
 # AFK Worker
@@ -23,7 +23,13 @@ This skill runs with **no human in the chair**. There is nobody to answer questi
 /afk-worker <feature-num>
 ```
 
-Invoked by the one-shot routine `/afk-fanout` scheduled (`prompt: "/afk-worker <feature-num>"`). Not intended for direct human use — if you want to run a single PRD interactively, call `/tdd-parallel <num>` yourself.
+Invoked by the one-shot routine `/afk-fanout` scheduled (`prompt: "/afk-worker <feature-num>"`), or — on a `runner: self-hosted` repo — by `scripts/afk-dispatch.sh` running `claude -p "/afk-worker <feature-num>"` headless in a fresh clone on your own machine (any model Claude Code can reach, e.g. MiniMax via `ANTHROPIC_BASE_URL`). Not intended for direct human use — if you want to run a single PRD interactively, call `/tdd-parallel <num>` yourself.
+
+**Runner-supplied environment** (set by the self-hosted dispatcher; absent under claude.ai routines):
+
+- `AFK_RUN_DATE` — the ledger date dir (`.afk-runs/<date>/`) holding this PRD's entry. When unset, use the newest date dir whose `<feature-num>.md` says `claim: scheduled`.
+- `AFK_RUN_REF` — `<host>:<log path>` of this run; written into the entry's `routine:` field (§1) so `/morning-review` can find the log.
+- `AFK_MAX` — the `--max` (sub-agents per wave) for §2; default `2`. Self-hosted machines set it low (typically `1`) to fit small RAM.
 
 ## Pre-flight
 
@@ -40,13 +46,13 @@ The routine starts a fresh clone of `main`, so the invariants should already hol
 
 Flip the claim from `scheduled` to `in-progress` so a stray re-schedule won't double-run the PRD:
 
-- **`.scratch/` mode:** set `claim: in-progress` in this PRD's ledger entry `.afk-runs/<date>/<feature-num>.md` on the `afk-runs` branch and push it (`git pull --rebase origin afk-runs` first, then push; one file per PRD means no content conflict). Do **not** touch `.scratch/` on `main` — that write would be lost and never reaches the reviewer.
+- **`.scratch/` mode:** set `claim: in-progress` in this PRD's ledger entry `.afk-runs/<date>/<feature-num>.md` on the `afk-runs` branch (if `AFK_RUN_REF` is set, also replace the `routine: -` value on the `trigger:` line with it) and push it (`git pull --rebase origin afk-runs` first, then push; one file per PRD means no content conflict). Do **not** touch `.scratch/` on `main` — that write would be lost and never reaches the reviewer.
 - **GitHub-issues mode:** swap the parent label `scheduled` → `in-progress` and comment.
 
 ### 2. Run /tdd-parallel
 
 ```
-/tdd-parallel <feature-num> --on-review-failure=continue --max 2
+/tdd-parallel <feature-num> --on-review-failure=continue --max ${AFK_MAX:-2}
 ```
 
 Operate under the AFK contract:

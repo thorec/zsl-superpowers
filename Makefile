@@ -16,6 +16,8 @@ test:
 	bash skills/engineering/tdd-parallel/scripts/tests/test_preflight.sh
 	bash skills/remote-agents/afk-fanout/scripts/tests/test_write_afk_entry.sh
 	bash skills/remote-agents/afk-fanout/scripts/tests/test_resolve_origin_url.sh
+	bash skills/remote-agents/afk-worker/scripts/tests/test_select_due_entry.sh
+	bash skills/remote-agents/afk-worker/scripts/tests/test_afk_dispatch.sh
 
 # Docs run on mkdocs-material with the `social` plugin, which needs cairo at
 # build time (CI installs it via apt; macOS via `brew install cairo`). uvx

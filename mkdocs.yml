@@ -76,6 +76,7 @@ nav:
       - Parallel TDD: tdd-parallel.md
       - Code review: code-review.md
       - Remote agents (overnight): remote-agents.md
+      - Self-hosted runner (any model): self-hosted-runner.md
   - Skills:
       - Overview: skills/index.md
       - Plan:

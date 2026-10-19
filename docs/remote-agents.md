@@ -10,7 +10,9 @@ If you want the specs, see
 [`afk-fanout`](skills/afk-fanout.md),
 [`afk-worker`](skills/afk-worker.md), and
 [`morning-review`](skills/morning-review.md). This page covers the *why* —
-the design decisions behind the loop.
+the design decisions behind the loop. To run the workers on your own
+machine, or on a non-Claude model such as MiniMax, see the
+[self-hosted runner](self-hosted-runner.md).
 
 ## The shape: evening → overnight → morning
 

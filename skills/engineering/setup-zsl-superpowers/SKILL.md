@@ -176,7 +176,23 @@ If the user opts out, do not write `docs/agents/project-board.md` — the skills
 
 This section is more involved than A–E, so **walk it one decision at a time** — present a step, get the answer, then move on. Don't dump it all at once. If the user opts out at the top, do not write `docs/agents/remote-env.md` (`/afk-fanout` detects its absence and refuses; the rest of the loop is unaffected).
 
-> **Lead with this — the environment is reusable, not per-repo.** A Claude Code *environment* on claude.ai is **repo-agnostic**: its config screen has only **Name / Network access / Environment variables / Setup script** — there is **no repo field**. The repo a routine works on is chosen *per-routine* (via `sources`, which `/afk-fanout` sets at schedule time from this repo's `origin`), not by the environment. So **one** generic environment (e.g. "Full Network + GH + Telegram") is reused across *every* project. The user very likely already has a usable one and does **not** need a new per-repo environment.
+**F0 — Pick the runner.** Ask: *"Where should the overnight workers run?"*
+
+- **`claude-routines`** (default) — Anthropic-hosted claude.ai sessions scheduled via `RemoteTrigger`. Claude models only, billed to the claude.ai subscription. Walk **F1–F7** below.
+- **`self-hosted`** — a machine the user owns (a small VM or spare box) runs `afk-dispatch.sh` from cron, which clones the repo and runs `claude -p "/afk-worker <num>"` headless. Works with **any model Claude Code can reach** — e.g. MiniMax via `ANTHROPIC_BASE_URL`. Walk **S1–S4** below instead of F1–F5; F4 (Telegram), F6 (writable remote) and F7 (runtime creds) still apply, with "environment env vars" read as "the runner's env file". The full operator guide is `docs/self-hosted-runner.md` in zsl-superpowers — point the user at it.
+
+Record the choice as the `runner:` line in `remote-env.md`.
+
+**Self-hosted path (S1–S4).** Walk one step at a time, as for F:
+
+- **S1 — Machine.** No GPU (the model runs at the provider). **4 GB RAM** is enough for light unit-test suites, **8 GB** for one database container; heavy Docker/browser suites want more. Add 4–8 GB swap. Linux (Ubuntu LTS) or macOS. Install Node 18+, Claude Code, `git`, `gh`, `jq`, `curl`, and the project's own toolchain (whatever `make test` needs). Run it as a dedicated user — workers run with `--permission-mode bypassPermissions`.
+- **S2 — zsl-superpowers checkout + env file.** `git clone https://github.com/ZunoSmartLabs/zsl-superpowers ~/zsl-superpowers` (the dispatcher and the skills-provisioning hook both live in it). Write `~/.config/zsl-afk/env` (mode `600`) from the template in `docs/self-hosted-runner.md`: the model vars (`ANTHROPIC_BASE_URL`, `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_MODEL`, `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU}_MODEL`), `GH_TOKEN` (same scopes as F2), `AFK_REPOS` (this repo's origin URL, space-separated with others), `AFK_MAX=1`, and the optional Telegram pair. Then `gh auth setup-git` as the runner user — same load-bearing reason as F2.
+- **S3 — Cron.** `*/15 * * * * $HOME/zsl-superpowers/skills/remote-agents/afk-worker/scripts/afk-dispatch.sh >>$HOME/afk/dispatch.log 2>&1`. Cron's PATH is minimal — put `PATH=...` (including the dir holding `claude` and `node`) at the top of the crontab.
+- **S4 — Smoke test.** Run the dispatcher once by hand; with nothing scheduled it must log `nothing due`. A clone/auth error here is the same error the overnight run would hit.
+
+Then in `remote-env.md` record `runner: self-hosted`, `slot_spacing_hours` (default 2 — lower it if the provider's limits allow), the runner host name, and the env-var **names** (never values). No `environment_id`, and the repo's `SessionStart` hook is **not** needed (the dispatcher provisions the skills itself) — skip F1–F3 and F5.
+
+> **Lead with this (claude-routines) — the environment is reusable, not per-repo.** A Claude Code *environment* on claude.ai is **repo-agnostic**: its config screen has only **Name / Network access / Environment variables / Setup script** — there is **no repo field**. The repo a routine works on is chosen *per-routine* (via `sources`, which `/afk-fanout` sets at schedule time from this repo's `origin`), not by the environment. So **one** generic environment (e.g. "Full Network + GH + Telegram") is reused across *every* project. The user very likely already has a usable one and does **not** need a new per-repo environment.
 
 **F1 — Reuse an existing environment if there is one.** Before walking the form, try to auto-discover an environment id the user already has and offer to reuse it:
 
@@ -306,7 +322,7 @@ If Section F was answered yes, also append:
 ```markdown
 ### Remote agent environment
 
-[one-line summary — the environment id]. See `docs/agents/remote-env.md`.
+[one-line summary — the runner, and the environment id (claude-routines) or runner host (self-hosted)]. See `docs/agents/remote-env.md`.
 ```
 
 Then write the docs files using the seed templates in this skill folder as a starting point:
@@ -323,7 +339,7 @@ Then write the docs files using the seed templates in this skill folder as a sta
 - [remote-env.md](./remote-env.md) — remote agent environment for the overnight loop (only when Section F was answered yes)
 - [remote-skills-hook.sh](./remote-skills-hook.sh) — the `SessionStart` hook that provisions the skills in remote sessions (only when Section F was answered yes); copy to the target repo's `.claude/hooks/zsl-remote-skills.sh`
 
-For "other" issue trackers, write `docs/agents/issue-tracker.md` from scratch using the user's description. For `docs/agents/project-board.md`, fill the template placeholders with the project node ID, Status field ID, and option IDs you discovered in Section E. For `docs/agents/remote-env.md`, fill the seed from Section F: the environment id (replacing the `env_xxxxxxxxxxxxxxxxxxxxxx` placeholder), the chosen env **name**, the env-var **names** the environment must carry (never values — `GH_TOKEN`, the Telegram pair if opted in, any F7 cloud-cred names), and confirm the verbatim setup script and PAT-scope notes match what you walked. When Section F was answered yes, also install the remote-skills hook (copy `remote-skills-hook.sh` → `.claude/hooks/zsl-remote-skills.sh`, `chmod +x`, and merge the `SessionStart` entry into `.claude/settings.json` per Section F step F5 — append, don't overwrite).
+For "other" issue trackers, write `docs/agents/issue-tracker.md` from scratch using the user's description. For `docs/agents/project-board.md`, fill the template placeholders with the project node ID, Status field ID, and option IDs you discovered in Section E. For `docs/agents/remote-env.md`, fill the seed from Section F — set the `runner:` line first; for `self-hosted`, fill the Runner section (host, `slot_spacing_hours`, env-file var names) and delete the claude.ai-environment sections, then stop here. For `claude-routines`: the environment id (replacing the `env_xxxxxxxxxxxxxxxxxxxxxx` placeholder), the chosen env **name**, the env-var **names** the environment must carry (never values — `GH_TOKEN`, the Telegram pair if opted in, any F7 cloud-cred names), and confirm the verbatim setup script and PAT-scope notes match what you walked. When Section F was answered yes with `runner: claude-routines`, also install the remote-skills hook (copy `remote-skills-hook.sh` → `.claude/hooks/zsl-remote-skills.sh`, `chmod +x`, and merge the `SessionStart` entry into `.claude/settings.json` per Section F step F5 — append, don't overwrite).
 
 ### 5. Migrate local-markdown layout (local-markdown only)
 
