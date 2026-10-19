@@ -312,7 +312,7 @@ checkout. Three skills, evening to morning:
 :   Evening, interactive. Shows the queue of `tracking` PRDs with `ready-for-agent` children; you pick which to run and in what order; it schedules one one-shot remote routine per PRD a fixed 2h apart.
 
 [`/zsl:afk-worker`](skills/afk-worker.md)
-:   What each routine fires (not invoked by hand). Runs unattended in its own clone, drives `/zsl:tdd-parallel <num> --on-review-failure=continue --max 2`, opens one integration PR, records its outcome on the `afk-runs` ledger.
+:   What each routine — or the [self-hosted runner](self-hosted-runner.md)'s cron dispatcher — fires (not invoked by hand). Runs unattended in its own clone, drives `/zsl:tdd-parallel <num> --on-review-failure=continue --max 2`, opens one integration PR, records its outcome on the `afk-runs` ledger.
 
 [`/zsl:morning-review`](skills/morning-review.md)
 :   Morning, interactive. Reconciles the ledger into the canonical `.scratch/` tracker, then walks you through the PRs to verify and merge, halted slices, and no-result PRDs. Never auto-merges; never deploys.

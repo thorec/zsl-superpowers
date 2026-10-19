@@ -2,7 +2,21 @@
 
 Per-repo config for the overnight remote-agent loop (`/afk-fanout`, `/afk-worker`, `/morning-review`). `/afk-fanout` reads this file to schedule one remote claude.ai routine per PRD; it refuses at pre-flight if this file is missing or has no `environment_id`. This is the operator reference for the environment the loop runs in — fill it from `/setup-zsl-superpowers` Section F.
 
-## The environment is repo-agnostic (reused across projects)
+## Runner
+
+- **runner:** `claude-routines`   <!-- or `self-hosted` -->
+- **slot_spacing_hours:** `2`      <!-- the gap /afk-fanout leaves between slots -->
+
+`/afk-fanout` reads these two lines. Two runners exist:
+
+- **`claude-routines`** — each worker is a one-off claude.ai routine in an Anthropic-hosted session (Claude models only). Everything below this section applies.
+- **`self-hosted`** — a machine you own runs `afk-dispatch.sh` (in zsl-superpowers at `skills/remote-agents/afk-worker/scripts/`) from cron; it picks up each due `trigger: self-hosted` ledger entry, clones this repo, and runs `claude -p "/afk-worker <num>"` headless. Any model Claude Code can reach works (e.g. MiniMax via `ANTHROPIC_BASE_URL`). For this runner, record below only:
+  - **Runner host:** `<hostname>` — where the per-run logs and kept clones live.
+  - **Env-file var names** (in `~/.config/zsl-afk/env` on the host; values never here): `ANTHROPIC_BASE_URL`, `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_MODEL`, `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU}_MODEL`, `GH_TOKEN`, `AFK_REPOS`, `AFK_MAX`, `<Telegram pair, cloud creds — if any>`.
+
+  …and delete the claude.ai-environment sections that follow (environment id, setup script, network access, remote-skills hook). The `afk-runs` ledger and notifications sections still apply. Operator guide: `docs/self-hosted-runner.md` in zsl-superpowers.
+
+## The environment is repo-agnostic (reused across projects) — claude-routines
 
 A Claude Code **environment** on claude.ai has **no repo field** — its config screen is only Name / Network access / Environment variables / Setup script. The repo a routine works on is selected **per-routine** by `/afk-fanout`, which sets `job_config.ccr.session_context.sources` from *this* repo's `origin` at schedule time. So **one generic environment is reused across every project** — you do not create a new environment per repo. This file records *which* shared environment this repo schedules into.
 

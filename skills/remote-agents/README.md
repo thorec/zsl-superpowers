@@ -2,6 +2,8 @@
 
 Skills for the overnight loop — fan work out to dedicated remote claude.ai sessions, then review the results. These don't fit the daily-interactive engineering buckets: one schedules unattended remote runs, one *is* the unattended run, one walks the human through the morning aftermath.
 
+Workers run either as claude.ai routines (the default) or on a machine you own via the cron dispatcher `afk-worker/scripts/afk-dispatch.sh` (any model, e.g. MiniMax) — see the [self-hosted runner guide](../../docs/self-hosted-runner.md).
+
 The loop: evening **`/afk-fanout`** (you pick which PRDs to run) → overnight **`/afk-worker`** routines (one remote session per PRD, 2h apart) → morning **`/morning-review`** (you verify and merge).
 
 - **[afk-fanout](./afk-fanout/SKILL.md)** — Interactive local-session scheduler. Reviews the queue of `tracking` PRDs with `ready-for-agent` children, lets you pick which to run overnight and in what order, then schedules one one-shot remote routine per PRD a fixed 2h apart (a throttle to stay under the per-5h-window token cap), each running `/afk-worker`. Places a light `scheduled` claim so a re-run won't double-book.

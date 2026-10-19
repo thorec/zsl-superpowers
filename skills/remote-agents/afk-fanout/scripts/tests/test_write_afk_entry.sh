@@ -109,6 +109,17 @@ assert_eq "bad-date: exit 1" 1 "$code"
 assert_contains "bad-date: message" "$out" "must be YYYY-MM-DD"
 rm -rf "$work"
 
+# --- 8. Self-hosted runner: no routine exists, so trigger is `self-hosted` and the
+#        routine URL is `-` (the worker later fills in host:logpath). The dash must be
+#        accepted as a value, not mistaken for a missing argument.
+work="$(mktemp -d)"
+bash "$WRITER" --date 2026-05-31 --feature-num 023 --title T --slot 2026-05-31T20:07:00Z \
+  --trigger-id self-hosted --routine-url - --root "$work" >/dev/null
+code=$?
+assert_eq "self-hosted: exit 0" 0 "$code"
+assert_contains "self-hosted: trigger line" "$(cat "$work/2026-05-31/023.md")" "trigger: self-hosted   slot: 2026-05-31T20:07:00Z   routine: -"
+rm -rf "$work"
+
 echo
 if [ "$fails" -eq 0 ]; then
   echo "write-afk-entry.sh: all tests passed"

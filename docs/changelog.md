@@ -4,6 +4,41 @@ For the full commit history, see
 [github.com/ZunoSmartLabs/zsl-superpowers/commits/main](https://github.com/ZunoSmartLabs/zsl-superpowers/commits/main).
 This page summarises the user-facing changes per plugin version.
 
+## 2.2.0
+
+Add a **self-hosted runner** for the overnight loop, so the workers can run on
+a machine you own and on **any model Claude Code can reach**, MiniMax for
+example. claude.ai routines always run Claude on Anthropic's hosting. The new
+runner swaps out only the scheduler and the host; the skills, the `afk-runs`
+ledger and `/morning-review` are unchanged.
+
+- **New `runner:` setting** in `docs/agents/remote-env.md`: `claude-routines`
+  (the default, behaves exactly as before) or `self-hosted`.
+- **`afk-dispatch.sh`** (in `afk-worker/scripts/`) runs from cron every ~15
+  min. It picks the earliest due `trigger: self-hosted` ledger entry, clones
+  the repo fresh, provisions the skills, and runs `claude -p "/afk-worker <num>"`
+  headless. One worker runs at a time (a lock), a crashed worker is never
+  re-run, and a stuck run's clone is kept for inspection.
+- **`select-due-entry.sh`**: the deterministic gate for "is this entry due?",
+  with tests.
+- **`/afk-fanout`**: on `self-hosted`, it skips the `RemoteTrigger` /
+  environment / hook pre-flight, creates no routines, and writes entries with
+  `--trigger-id self-hosted --routine-url -`. Slot spacing can be set with
+  `slot_spacing_hours`.
+- **`/afk-worker`**: reads `AFK_RUN_DATE`, `AFK_RUN_REF` (written into the
+  entry's `routine:` field as `host:logpath`) and `AFK_MAX` (`--max`, default
+  2) when the dispatcher sets them.
+- **`/morning-review`**: knows that a self-hosted run's evidence is a log file
+  plus a kept clone on the runner, not a routine URL.
+- **`/setup-zsl-superpowers`** Section F starts by asking which runner to use
+  (F0), with a self-hosted walk-through (S1–S4).
+- New docs page: [Self-hosted runner](self-hosted-runner.md), covering machine
+  sizing (4–8 GB of RAM is enough for most repos), the env-file template and
+  cron setup.
+
+No migration is needed: repos without a `runner:` line keep using claude.ai
+routines.
+
 ## 2.1.0
 
 Sharpen the **`/commit`** skill in two ways.
