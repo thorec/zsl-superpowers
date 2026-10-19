@@ -17,13 +17,18 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
-REPO_URL="https://github.com/ZunoSmartLabs/zsl-superpowers"
+# Override to provision skills from a fork/copy (the self-hosted dispatcher sets
+# this to the repo its own checkout came from).
+REPO_URL="${ZSL_SUPERPOWERS_REPO:-https://github.com/ZunoSmartLabs/zsl-superpowers}"
 REF="${ZSL_SUPERPOWERS_REF:-main}"
 CACHE_DIR="${HOME}/.claude/cache/zsl-superpowers"
 SKILLS_DIR="${HOME}/.claude/skills"
 
 mkdir -p "$(dirname "$CACHE_DIR")" "$SKILLS_DIR"
 
+if [ -d "$CACHE_DIR/.git" ] && [ "$(git -C "$CACHE_DIR" remote get-url origin 2>/dev/null)" != "$REPO_URL" ]; then
+  rm -rf "$CACHE_DIR"
+fi
 if [ -d "$CACHE_DIR/.git" ]; then
   git -C "$CACHE_DIR" fetch --depth 1 origin "$REF" >/dev/null 2>&1
   git -C "$CACHE_DIR" checkout -q FETCH_HEAD
@@ -55,4 +60,4 @@ for category in engineering productivity misc remote-agents; do
   done
 done
 
-echo "zsl-superpowers @ ${REF}: linked ${linked} skills, skipped ${skipped} (local overrides)"
+echo "zsl-superpowers ($REPO_URL) @ ${REF}: linked ${linked} skills, skipped ${skipped} (local overrides)"

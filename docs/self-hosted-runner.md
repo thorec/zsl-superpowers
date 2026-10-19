@@ -71,11 +71,18 @@ through these steps. By hand:
 `git`, `gh`, `jq`, `curl`, plus whatever your project's `make test` needs.
 
 **2. Check out zsl-superpowers.** The dispatcher and the skills-provisioning
-hook both live in it:
+hook both live in it. Clone the copy whose skills you want the workers to run,
+whether that's upstream or your own fork:
 
 ```bash
 git clone https://github.com/ZunoSmartLabs/zsl-superpowers ~/zsl-superpowers
+# or your copy, e.g. https://github.com/<you>/zsl-superpowers
 ```
+
+Before each run, the dispatcher installs the skills from **the same repo its
+checkout was cloned from** (that checkout's `origin`). So a runner set up from
+your fork runs your fork's skills. Set `ZSL_SUPERPOWERS_REPO` in the env file
+to use a different repo instead.
 
 **3. Write the env file** at `~/.config/zsl-afk/env` (then `chmod 600`):
 
@@ -99,6 +106,7 @@ AFK_MAX=1                    # /tdd-parallel --max (sub-agents per wave)
 # AFK_WORK_DIR=~/afk/work    AFK_LOG_DIR=~/afk/logs    AFK_STATE_DIR=~/afk/state
 # AFK_KEEP_DAYS=7            AFK_TIMEOUT_HOURS=6
 # ZSL_SUPERPOWERS_REF=main   # skills version the provisioning hook checks out
+# ZSL_SUPERPOWERS_REPO=…     # skills repo (default: this checkout's origin)
 
 # Optional Telegram heads-up (see Section F4 of setup)
 # AFK_TELEGRAM_BOT_TOKEN=…
