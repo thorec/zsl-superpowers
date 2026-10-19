@@ -1,7 +1,11 @@
 [tool.ruff]
 line-length = 104
+# Skill scripts run via `#!/usr/bin/env python3`, which is 3.9 on stock macOS —
+# keep pyupgrade from suggesting newer-only APIs (e.g. datetime.UTC is 3.11+).
+target-version = "py39"
 
 [tool.basedpyright]
+pythonVersion = "3.9"
 typeCheckingMode = "standard"
 
 [tool.ruff.lint]
